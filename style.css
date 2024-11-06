@@ -75,7 +75,7 @@
     display: block;
     background: #040404;
     border: 1px solid rgb(82, 82, 82);
-    width: 500px;
+    width: 100%;
     image-rendering: crisp-edges;
     grid-area: ten;
   }
@@ -84,6 +84,7 @@
     grid-area: ted;
     display: flex;
     font-weight: bold;
+    text-align: center;
     font-size: large;
     -ms-flex-align: center;
     justify-content: center;
