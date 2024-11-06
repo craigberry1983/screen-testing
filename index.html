@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="style.css" />
+		<title>Screen Testing</title>
+		<div style="display: none">
+			<img id="source" src="res/PICO_font_10_12_14.png" width="316" height="16" />
+		</div>
+	</head>
+	<body>
+		<div class="grid-container">
+			<canvas id="canvas-10" width="32" height="16"></canvas>
+			<div id="canvas-10-desc">32 x 16 LEDs (10", 12" and 14" displays)</div>
+			<div id="controls">
+				<div>
+					<label>Number:</label>
+					<input type="range" min="0" max="999" value="25" class="slider" id="speedSlider" />
+					<div id="sliderLabel" style="display: inline"></div>
+				</div>
+				<div>
+					<label>Custom Message:</label>
+					<input id="txtMessage" type="text" />
+				</div>
+				<p id="disclaimer">Note: gated behind non-MUTCD flag and limited to two words of up to 5 letters each</p>
+			</div>
+			<fieldset id="bitmap-data">
+				<legend>Bitmap Data:</legend>
+				<div id="results"></div>
+			</fieldset>
+		</div>
+
+		<script src="script.js"></script>
+	</body>
+</html>

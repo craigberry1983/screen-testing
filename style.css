@@ -1,0 +1,92 @@
+/* reset */
+  html {
+    box-sizing: border-box;
+    font-size: large;
+    font-family:Arial, Helvetica, sans-serif;
+  }
+  
+  *, *:before, *:after {
+    box-sizing: inherit;
+  }
+  
+  body, h1, h2, h3, h4, h5, h6, p, ol, ul {
+    margin: 0;
+    padding: 0;
+    font-weight: normal;
+    background: rgb(27, 27, 27);
+    color: white;
+  }
+  
+  ol, ul {
+    list-style: none;
+  }
+  
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* ui */
+  #disclaimer {
+    font-style: italic;
+    font-size: 14px;
+    color: lightblue;
+    margin: 10px;
+  }
+
+  input[type=range] {
+    margin: 20px;
+    vertical-align: middle;
+}
+
+  #controls {
+    padding: 10px;
+    margin: auto;
+    border: 1px solid rgb(82, 82, 82);
+    grid-area: ctl;
+  }
+
+  #controls > div {
+    align-items: center;
+  }
+
+  .grid-container {
+    margin: 50px;
+    vertical-align: middle;
+    display: grid;
+    gap: 10px;
+    grid-template-areas: 
+            "ted"
+            "ten"
+            "ctl"
+            "dat";
+  }
+
+  #bitmap-data {
+    height: 250px;
+    overflow: auto;
+    grid-area: dat;
+    display: none;
+  }
+
+  #canvas-10 {
+    padding: 0;
+    margin: auto;
+    display: block;
+    background: #040404;
+    border: 1px solid rgb(82, 82, 82);
+    width: 500px;
+    image-rendering: crisp-edges;
+    grid-area: ten;
+  }
+
+  #canvas-10-desc {
+    grid-area: ted;
+    display: flex;
+    font-weight: bold;
+    font-size: large;
+    -ms-flex-align: center;
+    justify-content: center;
+    align-items: center;
+  }
+
