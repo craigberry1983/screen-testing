@@ -27,68 +27,87 @@
   }
 
   /* ui */
-  #disclaimer {
-    font-style: italic;
-    font-size: 14px;
-    color: lightblue;
-    margin: 10px;
-  }
-
-  input[type=range] {
-    margin: 20px;
-    vertical-align: middle;
+.grid-container {
+  margin: 2px;
+  vertical-align: middle;
+  display: grid;
+  gap: 10px;
+  grid-template-areas: 
+          "ten"
+          "ctl"
+          "dat";
 }
 
-  #controls {
-    padding: 10px;
-    margin: auto;
-    border: 1px solid rgb(82, 82, 82);
-    grid-area: ctl;
-  }
+.subheading {
+  color: #A8A8A8;
+  font-size: 14px;
+}
 
-  #controls > div {
-    align-items: center;
-  }
+h3 {
+  margin: 4px 0px;
+}
 
-  .grid-container {
-    margin: 50px;
-    vertical-align: middle;
-    display: grid;
-    gap: 10px;
-    grid-template-areas: 
-            "ted"
-            "ten"
-            "ctl"
-            "dat";
-  }
+input[type=range] {
+  margin: 4px;
+  vertical-align: middle;
+}
 
-  #bitmap-data {
-    height: 250px;
-    overflow: auto;
-    grid-area: dat;
-    display: none;
-  }
+input[type=number] {
+  margin: 4px;
+  vertical-align: middle;
+  width: 75px;
+  background-color: #181818;
+  color: white;
+  border: 1px solid rgb(82, 82, 82);
+}
 
-  #canvas-10 {
-    padding: 0;
-    margin: auto;
-    display: block;
-    background: #040404;
-    border: 1px solid rgb(82, 82, 82);
-    width: 100%;
-    max-width: 500px;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    grid-area: ten;
-  }
+input[type=text] {
+  margin: 4px;
+  vertical-align: middle;
+  width: 200px;
+  background-color: #181818;
+  color: white;
+  border: 1px solid rgb(82, 82, 82);
+}
 
-  #canvas-10-desc {
-    grid-area: ted;
-    display: flex;
-    font-weight: bold;
-    text-align: center;
-    font-size: large;
-    -ms-flex-align: center;
-    justify-content: center;
-    align-items: center;
-  }
+select {
+  background-color: #181818;
+  color: white;
+  border: 1px solid rgb(82, 82, 82);
+}
+
+#controls {
+  padding: 10px;
+  margin: auto;
+  border: 1px solid rgb(82, 82, 82);
+  grid-area: ctl;
+}
+
+#mainCanvas {
+  padding: 0;
+  margin: auto;
+  display: block;
+  background: #040404;
+  border: 1px solid rgb(82, 82, 82);
+  width: 100%;
+  max-width: 500px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  grid-area: ten;
+}
+
+#bitmap-data {
+  height: 250px;
+  overflow: auto;
+  grid-area: dat;
+  display: none;
+}
+
+#disclaimer {
+  font-style: italic;
+  font-size: 14px;
+  color: lightblue;
+  margin: 10px;
+  width: 300px;
+  text-wrap: wrap;
+}

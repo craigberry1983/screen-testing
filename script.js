@@ -1,20 +1,16 @@
+//ui refs:
 const image = document.getElementById("source");
 const txtMessage = document.getElementById("txtMessage");
-
-const canvas10 = document.getElementById("canvas-10");
+const canvas = document.getElementById("mainCanvas");
+const ctx = canvas.getContext("2d");
 const resultsDiv = document.getElementById("results");
-
 const slider = document.getElementById("speedSlider");
 const sliderLabel = document.getElementById("sliderLabel");
+const bloomSlider = document.getElementById("bloom");
+const signSelect = document.getElementById("signSelect");
+const measurementsDiv = document.getElementById("measurements");
 
-const ctx10 = canvas10.getContext("2d");
-
-const spacing10 = 3;
-const columns10 = 32;
-const rows10 = 16;
-const padding = 1;
-
-//data objects:
+//data:
 const numbers = [
 	[0x1ff8, 0x7ffe, 0xf00f, 0xc003, 0xc003, 0xf00f, 0x7ffe, 0x1ff8], // 0
 	[0x0, 0x6000, 0x6000, 0xffff, 0xffff, 0x0, 0x0, 0x0], // 1
@@ -66,6 +62,163 @@ const glyphs = [
 	[0x6c00, 0x9200, 0x9200, 0x9200, 0x6c00, 0x0], // 8
 	[0x6000, 0x9000, 0x9200, 0x9400, 0x7800, 0x0], // 9
 ];
+
+const signModels = [
+	/*{ name: '8"', width: 17.067, height: 8.4, ledDiameter: 0.157, margin: 0.2, stride: 0.667, ledsX: 26, ledsY: 13 },*/
+	{ name: '10"', width: 21.1, height: 10.4, ledDiameter: 0.157, margin: 0.2, stride: 0.667, ledsX: 32, ledsY: 16 },
+	{ name: '12"', width: 25.1, height: 12.4, ledDiameter: 0.188, margin: 0.2, stride: 0.8, ledsX: 32, ledsY: 16 },
+	{ name: '14"', width: 29.1, height: 14.4, ledDiameter: 0.13, margin: 0.2, stride: 0.9333, ledsX: 32, ledsY: 16 },
+];
+
+//vars:
+const camera = {
+	x: 0,
+	y: 0,
+	zoom: 10,
+};
+
+let bloomFactor = 0;
+let selectedIndex = 0;
+let selectedModel = signModels[selectedIndex];
+var displaybuffer = getBlankScreen();
+
+//ui wiring:
+bloomSlider.addEventListener("input", (e) => {
+	bloomFactor = parseInt(e.target.value);
+	updateSelectedObject(signSelect.selectedIndex);
+});
+signSelect.addEventListener("change", () => updateSelectedObject(signSelect.selectedIndex));
+
+function updateSelectedObject(index) {
+	selectedIndex = Math.max(0, index);
+	selectedModel = signModels[selectedIndex];
+	updateMeasurementInputs();
+	update();
+}
+
+function updateMeasurementInputs() {
+	// Clear existing inputs
+	measurementsDiv.innerHTML = "";
+
+	// Create text boxes for each property of the selected model
+	Object.keys(selectedModel).forEach((key) => {
+		if (key !== "name") {
+			const inputWrapper = document.createElement("div");
+			const label = document.createElement("label");
+			label.textContent = `${key}: `;
+			label.classList.add("subheading");
+			const input = document.createElement("input");
+
+			// Set input type and initial value
+			input.type = "number";
+			input.value = selectedModel[key];
+			input.classList.add("subheading");
+
+			// Ensure integer input for ledsX and ledsY
+			if (key === "ledsX" || key === "ledsY") {
+				input.step = "1"; // Enforce integer step
+				input.addEventListener("input", (e) => {
+					const value = parseInt(e.target.value, 10);
+					if (!isNaN(value)) {
+						selectedModel[key] = value;
+						update();
+					}
+				});
+			} else {
+				input.step = "0.01"; // Default step for other numeric inputs
+				input.addEventListener("input", (e) => {
+					const value = parseFloat(e.target.value);
+					if (!isNaN(value)) {
+						selectedModel[key] = value;
+						update();
+					}
+				});
+			}
+
+			inputWrapper.appendChild(label);
+			inputWrapper.appendChild(input);
+			measurementsDiv.appendChild(inputWrapper);
+		}
+	});
+}
+
+function fitObjectOnScreen(objectWidthInInches, objectHeightInInches, camera) {
+	const zoomX = canvas.width / objectWidthInInches;
+	const zoomY = canvas.height / objectHeightInInches;
+	camera.zoom = Math.min(zoomX, zoomY);
+}
+
+function update() {
+	fitObjectOnScreen(selectedModel.width, selectedModel.height, camera);
+	draw(ctx, camera);
+}
+
+function draw(ctx, camera) {
+	const topLeft = { x: -selectedModel.width / 2, y: -selectedModel.height / 2 };
+	const topLeftPixels = worldToCanvas(topLeft.x, topLeft.y, camera);
+	const boardWidthPixels = selectedModel.width * camera.zoom;
+	const boardHeightPixels = selectedModel.height * camera.zoom;
+	const ledRadiusPixels = (selectedModel.ledDiameter / 2) * camera.zoom;
+
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.strokeStyle = "white";
+
+	ctx.fillStyle = "#181818";
+	ctx.fillRect(topLeftPixels.x, topLeftPixels.y, boardWidthPixels, boardHeightPixels);
+
+	const ledOnColor = "#FFB343";
+	const ledOffColor = "#101010";
+	const bloom = `#FFBF00${bloomFactor.toString().padStart(2, "0")}`;
+
+	for (let column = selectedModel.ledsX - 1; column >= 0; column--) {
+		const bits = getBits(displaybuffer[column]);
+		//traverse the column from bottom to top
+		for (let row = selectedModel.ledsY - 1; row >= 0; row--) {
+			//draw each LED
+			const pos = worldToCanvas(topLeft.x + selectedModel.margin + column * selectedModel.stride, topLeft.y + selectedModel.margin + row * selectedModel.stride, camera);
+			const ledOn = bits[selectedModel.ledsY - 1 - row] == 1;
+			ctx.fillStyle = ledOn ? ledOnColor : ledOffColor;
+			ctx.beginPath();
+			ctx.arc(pos.x, pos.y, ledRadiusPixels, 0, 2 * Math.PI);
+			ctx.fill();
+			ctx.closePath();
+			//index++;
+		}
+	}
+
+	//second pass: add bloom effect
+	for (let column = selectedModel.ledsX - 1; column >= 0; column--) {
+		const bits = getBits(displaybuffer[column]);
+		//traverse the column from bottom to top
+		for (let row = selectedModel.ledsY - 1; row >= 0; row--) {
+			//draw each LED
+			const pos = worldToCanvas(topLeft.x + selectedModel.margin + column * selectedModel.stride, topLeft.y + selectedModel.margin + row * selectedModel.stride, camera);
+			const ledOn = bits[selectedModel.ledsY - 1 - row] == 1;
+
+			if (ledOn) {
+				ctx.fillStyle = bloom;
+				ctx.beginPath();
+				ctx.arc(pos.x, pos.y, ledRadiusPixels * 10, 0, 2 * Math.PI);
+				ctx.fill();
+				ctx.closePath();
+			}
+		}
+	}
+}
+
+function worldToCanvas(worldX, worldY, camera) {
+	const canvasX = (worldX - camera.x) * camera.zoom + canvas.width / 2;
+	const canvasY = (worldY - camera.y) * camera.zoom + canvas.height / 2;
+	return { x: canvasX, y: canvasY };
+}
+
+// Populate the select element with options
+signModels.forEach((model, index) => {
+	const option = document.createElement("option");
+	option.value = index;
+	option.textContent = model.name;
+	signSelect.appendChild(option);
+});
 
 function getBlankScreen() {
 	return [0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000];
@@ -140,21 +293,6 @@ function setBit(number, position) {
 	return number | (1 << position);
 }
 
-function drawScreen(displayBuffer, canvas, context, ledsX, ledsY, spacing) {
-	context.clearRect(0, 0, canvas.width, canvas.height);
-	let index = 0;
-
-	for (let column = ledsX - 1; column >= 0; column--) {
-		const bits = getBits(displayBuffer[column]);
-		//traverse the column from bottom to top
-		for (let row = ledsY - 1; row >= 0; row--) {
-			context.fillStyle = bits[ledsY - 1 - row] == 1 ? "#FFB343" : "#101010";
-			context.fillRect(padding + column * spacing, padding + row * spacing, 1, 1);
-			index++;
-		}
-	}
-}
-
 function drawMessage(message, columns = 32, rows = 16) {
 	//ctx.clearRect(0, 0, canvas.width, canvas.height);
 	const map = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -162,7 +300,7 @@ function drawMessage(message, columns = 32, rows = 16) {
 	//split message into words.
 	var words = message.toUpperCase().split(" ");
 
-	var displaybuffer = getBlankScreen();
+	displaybuffer = getBlankScreen();
 
 	//truncate words to 2 maximum
 	if (words.length >= 2) {
@@ -201,11 +339,11 @@ function drawMessage(message, columns = 32, rows = 16) {
 		currentY += 9;
 	});
 
-	drawScreen(displaybuffer, canvas10, ctx10, columns10, rows10, spacing10);
+	draw(ctx, camera);
 }
 
-function drawNumber(number, columns = 32, rows = 16, numberWidth = 8) {
-	var displaybuffer = getBlankScreen();
+function drawNumber(number, numberWidth = 8) {
+	displaybuffer = getBlankScreen();
 
 	//get each digit from the number
 	const num = Math.max(0, Math.min(number, 999));
@@ -221,7 +359,7 @@ function drawNumber(number, columns = 32, rows = 16, numberWidth = 8) {
 		currentX += 10;
 	}
 
-	drawScreen(displaybuffer, canvas10, ctx10, columns10, rows10, spacing10);
+	draw(ctx, camera);
 }
 
 //convert image to data once it loads
@@ -242,10 +380,13 @@ window.addEventListener("load", function () {
 		drawMessage(txtMessage.value);
 	});
 
-	canvas10.width = padding / 2 + columns10 * spacing10;
-	canvas10.height = padding / 2 + rows10 * spacing10;
-
 	//draw leds
-	drawScreen(getBlankScreen(), canvas10, ctx10, 32, 16, spacing10);
+	//drawScreen(getBlankScreen(), canvas, ctx);
 	drawNumber(slider.value);
+
+	// Initialize
+	updateSelectedObject(0);
+	update();
 });
+
+var displaybuffer = getBlankScreen();
