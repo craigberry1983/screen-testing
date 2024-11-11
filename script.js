@@ -356,7 +356,7 @@ function drawNumber(number, numberWidth = 8) {
 		for (let x = 0; x < numberWidth; x++) {
 			displaybuffer[currentX + x] = numbers[digit][x];
 		}
-		currentX += stringDigits.length === 2 ? 11 : 10;
+		currentX += stringDigits.length === 2 ? 12 : 10;
 	}
 
 	draw(ctx, camera);
