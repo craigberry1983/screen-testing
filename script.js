@@ -350,13 +350,13 @@ function drawNumber(number, numberWidth = 8) {
 	var stringDigits = num.toString().split("");
 	var digits = stringDigits.map(Number);
 
-	var currentX = stringDigits.length === 3 ? 2 : stringDigits.length === 2 ? 7 : 12;
+	var currentX = stringDigits.length === 3 ? 2 : stringDigits.length === 2 ? 6 : 12;
 
 	for (const digit of digits) {
 		for (let x = 0; x < numberWidth; x++) {
 			displaybuffer[currentX + x] = numbers[digit][x];
 		}
-		currentX += 10;
+		currentX += stringDigits.length === 2 ? 11 : 10;
 	}
 
 	draw(ctx, camera);
