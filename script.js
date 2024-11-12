@@ -121,7 +121,7 @@ const camera = {
 };
 
 let bloomFactor = 0;
-let selectedIndex = 0;
+let selectedIndex = 1;
 let selectedModel = signModels[selectedIndex];
 var displaybuffer = getBlankScreen();
 
