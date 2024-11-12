@@ -11,10 +11,6 @@ const signSelect = document.getElementById("signSelect");
 const measurementsDiv = document.getElementById("measurements");
 
 //data:
-const smallFontOffsets = [10, 5, 10, 9, 11, 9, 10, 9, 10, 9]; //8"
-const mediumFontOffsets = [12, 12, 12, 12, 12, 12, 12, 12, 12, 12]; //10", 12", 14"
-const largeFontOffsets = [26, 12, 24, 23, 26, 23, 23, 23, 24, 24]; //18"
-
 const smallFontNumbers = [
 	[0x7fc, 0xffe, 0x1c07, 0x1803, 0x1803, 0x1c07, 0xffe, 0x7fc], // 0
 	[0x0, 0x0, 0xc00, 0x1fff, 0x1fff, 0x1fff, 0x0, 0x0], // 1
@@ -42,16 +38,16 @@ const mediumFontNumbers = [
 ];
 
 const largeFontNumbers = [
-	[0xff00, 0x7ffe0, 0xffff0, 0x3ffffc, 0x3f80fc, 0x7c003e, 0x78001e, 0xf8001f, 0xf0000f, 0xf0000f, 0xf0000f, 0xf0000f, 0xf8001f, 0x78001e, 0x7c003e, 0x3f01fc, 0x3ffffc, 0x1ffff8, 0x7ffe0, 0xff00], // 0
-	[0x3c0000, 0x3c0000, 0x7c0000, 0xffffff, 0xffffff, 0xffffff, 0xffffff], // 1
-	[0x10000f, 0x38003f, 0x3c00ff, 0x7c01ff, 0x7c03ff, 0x7807ff, 0xf80fcf, 0xf00f8f, 0xf01f0f, 0xf01f0f, 0xf03e0f, 0xf03e0f, 0xf03c0f, 0xf07c0f, 0x787c0f, 0x78f80f, 0x7ff80f, 0x3ff00f, 0x1fe00f, 0x7c00f], // 2
-	[0x10, 0x100038, 0x38007c, 0x38007e, 0x7c003e, 0x78001e, 0xf8001f, 0xf0000f, 0xf0000f, 0xf0f00f, 0xf0f00f, 0xf0f00f, 0xf8f00f, 0x79f81e, 0x7ffc3e, 0x3ffffc, 0x3ffff8, 0xf1ff0, 0x7e0], // 3
-	[0x3e0, 0x7e0, 0xfe0, 0x1fe0, 0x3fe0, 0x7fe0, 0xfde0, 0x1f9e0, 0x3f1e0, 0x7e1e0, 0xfc1e0, 0x1f81e0, 0x3f01e0, 0x7e01e0, 0xfc01e0, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0x1e0, 0x1e0, 0x1e0, 0x1e0], // 4
-	[0xc, 0xffe01c, 0xffe03e, 0xfff01e, 0xfff01e, 0xf1f00f, 0xf1e00f, 0xf1e00f, 0xf1e00f, 0xf1e00f, 0xf1e00f, 0xf1e00f, 0xf1f01f, 0xf0f01e, 0xf0f83e, 0xf07ffc, 0xf03ff8, 0x1ff0, 0x7c0], // 5
-	[0x3fc0, 0xfff0, 0x3fff8, 0x7fffc, 0xffffe, 0x1ffe3e, 0x3f7c1e, 0x3e780f, 0x7c780f, 0x78780f, 0x78780f, 0xf0780f, 0xf0780f, 0xf07c1e, 0xf03e3e, 0xf03ffe, 0x1ffc, 0xff8, 0x3e0], // 6
-	[0xf00000, 0xf00000, 0xf00000, 0xf00000, 0xf00000, 0xf00000, 0xf00000, 0xf0007f, 0xf007ff, 0xf01fff, 0xf07fff, 0xf1ffc0, 0xf7fe00, 0xfff800, 0xffe000, 0xff8000, 0xff0000, 0xfc0000, 0xf80000, 0xf80000], // 7
-	[0x7e0, 0xf1ff8, 0x3ffffc, 0x3ffffc, 0x7ffc3e, 0x78f81e, 0xf0781f, 0xf0700f, 0xf0700f, 0xf0700f, 0xf0700f, 0xf0700f, 0xf0700f, 0xf0781f, 0x78f81e, 0x7ffc3e, 0x3ffffc, 0x3ffffc, 0xf1ff8, 0x7e0], // 8
-	[0xf8000, 0x1fe000, 0x3ff000, 0x7ff80f, 0x7cf80f, 0x78780f, 0xf03c0f, 0xf03c0f, 0xf03c1e, 0xf03c1e, 0xf03c3e, 0xf03c3c, 0xf03c7c, 0x787cf8, 0x7cfff8, 0x7ffff0, 0x3fffe0, 0x1fffc0, 0xfff00, 0x3f800], // 9
+	[0x1ffff8, 0x7ffffc, 0x7ffffc, 0xfc003f, 0xf0001f, 0xf0001f, 0xfc003f, 0x7ffffc, 0x7ffffc, 0x1ffff8], // 0
+	[0x0, 0x0, 0x7c0000, 0x7c0000, 0xffffff, 0xffffff, 0xffffff, 0x0, 0x0, 0x0], // 1
+	[0x7c00ff, 0x7c01ff, 0xfc07ff, 0xf00fff, 0xf03f1f, 0xf03e1f, 0xf07e1f, 0xf8f81f, 0xfff01f, 0x7fc01f], // 2
+	[0x70001c, 0xfc003f, 0xfc003f, 0xf0001f, 0xf0781f, 0xf0781f, 0xf8fe3f, 0xffffff, 0x7ffffc, 0x1f87f8], // 3
+	[0x7fe0, 0x1ffe0, 0x3f1e0, 0xfc1e0, 0x1f81e0, 0x7e01e0, 0xffffff, 0xffffff, 0xffffff, 0x1e0], // 4
+	[0xfff81c, 0xfff83f, 0xfff83f, 0xf1f01f, 0xf1f01f, 0xf1f01f, 0xf1f83f, 0xf1ffff, 0xf07ffc, 0x3ff8], // 5
+	[0x1fff8, 0xffffc, 0x1ffe3f, 0x7fb81f, 0xfc781f, 0xf0781f, 0xf0781f, 0xf07e3f, 0x3ffc, 0xff8], // 6
+	[0xf00000, 0xf00000, 0xf00000, 0xf000ff, 0xf03fff, 0xf1ffff, 0xffff00, 0xffc000, 0xfe0000, 0xfc0000], // 7
+	[0x1fcff8, 0x7ffffc, 0xf9fe3f, 0xf0781f, 0xf0781f, 0xf0781f, 0xf0781f, 0xf9fe3f, 0x7ffffc, 0x1fcff8], // 8
+	[0x1ff000, 0x3ffc00, 0xfc7e0f, 0xf81e0f, 0xf81e0f, 0xf81e3f, 0xf81dfe, 0xfc7ff8, 0x3ffff0, 0x1fff80], // 9
 ];
 
 const smallGlyphs = [
@@ -133,10 +129,11 @@ const mediumGlyphs = [
 ];
 
 const signModels = [
-	{ name: '8"', width: 17.067, height: 8.4, ledDiameter: 0.157, margin: 0.2, stride: 0.667, ledsX: 26, ledsY: 13 },
-	{ name: '10"', width: 21.1, height: 10.4, ledDiameter: 0.157, margin: 0.2, stride: 0.667, ledsX: 32, ledsY: 16 },
-	{ name: '12"', width: 25.1, height: 12.4, ledDiameter: 0.188, margin: 0.2, stride: 0.8, ledsX: 32, ledsY: 16 },
-	{ name: '14"', width: 29.1, height: 14.4, ledDiameter: 0.13, margin: 0.2, stride: 0.9333, ledsX: 32, ledsY: 16 },
+	{ name: '8"', width: 17.067, height: 8.4, ledDiameter: 0.157, margin: 0.2, strideX: 0.667, strideY: 0.667, ledsX: 26, ledsY: 13 },
+	{ name: '10"', width: 21.1, height: 10.4, ledDiameter: 0.157, margin: 0.2, strideX: 0.667, strideY: 0.667, ledsX: 32, ledsY: 16 },
+	{ name: '12"', width: 25.1, height: 12.4, ledDiameter: 0.188, margin: 0.2, strideX: 0.8, strideY: 0.8, ledsX: 32, ledsY: 16 },
+	{ name: '14"', width: 29.1, height: 14.4, ledDiameter: 0.13, margin: 0.2, strideX: 0.9333, strideY: 0.9333, ledsX: 32, ledsY: 16 },
+	{ name: '18"', width: 28.5, height: 19, ledDiameter: 0.157, margin: 0.2, strideX: 0.92, strideY: 0.809, ledsX: 32, ledsY: 24 },
 ];
 
 //ui wiring:
@@ -221,10 +218,17 @@ function draw(ctx, camera) {
 
 	for (let column = selectedModel.ledsX - 1; column >= 0; column--) {
 		const bits = getBits(displaybuffer[column]);
+		var xPosition = topLeft.x + selectedModel.margin + column * selectedModel.strideX;
+
+		//provide for the two boards placed together in 18" sign
+		if (selectedModel.name == '18"' && column > 15) {
+			xPosition -= 0.378;
+		}
+
 		//traverse the column from bottom to top
 		for (let row = selectedModel.ledsY - 1; row >= 0; row--) {
 			//draw each LED
-			const pos = worldToCanvas(topLeft.x + selectedModel.margin + column * selectedModel.stride, topLeft.y + selectedModel.margin + row * selectedModel.stride, camera);
+			const pos = worldToCanvas(xPosition, topLeft.y + selectedModel.margin + row * selectedModel.strideY, camera);
 			const ledOn = bits[selectedModel.ledsY - 1 - row] == 1;
 			ctx.fillStyle = ledOn ? ledOnColor : ledOffColor;
 			ctx.beginPath();
@@ -240,7 +244,7 @@ function draw(ctx, camera) {
 		//traverse the column from bottom to top
 		for (let row = selectedModel.ledsY - 1; row >= 0; row--) {
 			//draw each LED
-			const pos = worldToCanvas(topLeft.x + selectedModel.margin + column * selectedModel.stride, topLeft.y + selectedModel.margin + row * selectedModel.stride, camera);
+			const pos = worldToCanvas(topLeft.x + selectedModel.margin + column * selectedModel.strideX, topLeft.y + selectedModel.margin + row * selectedModel.strideY, camera);
 			const ledOn = bits[selectedModel.ledsY - 1 - row] == 1;
 
 			if (ledOn) {
@@ -380,7 +384,7 @@ function convertImageToData(imgElement) {
 
 function getBits(columnData) {
 	const bits = [];
-	for (let i = 0; i < 16; i++) {
+	for (let i = 0; i < 24; i++) {
 		bits.push((columnData & (1 << i)) === 0 ? 0 : 1);
 	}
 	return bits;
@@ -399,14 +403,15 @@ function drawMessage(message) {
 	const glyphs = signSelect.selectedIndex == 0 ? smallGlyphs : mediumGlyphs;
 	const glyphHeight = signSelect.selectedIndex == 0 ? 6 : 7;
 	const maxLetters = signSelect.selectedIndex == 0 ? 4 : 5;
+	const maxWords = signSelect.selectedIndex == 4 ? 3 : 2;
 	//split message into words.
 	var words = message.toUpperCase().split(" ");
 
 	displaybuffer = getBlankScreen();
 
-	//truncate words to 2 maximum
-	if (words.length >= 2) {
-		words = words.slice(0, 2);
+	//truncate words to max allowed
+	if (words.length >= maxWords) {
+		words = words.slice(0, maxWords);
 	}
 
 	var currentY = words.length > 1 ? 0 : Math.floor(selectedModel.ledsY / 2 - 7 / 2);
@@ -444,7 +449,12 @@ function drawMessage(message) {
 }
 
 function drawNumber(number) {
-	const numbers = signSelect.selectedIndex == 0 ? smallFontNumbers : mediumFontNumbers;
+	var numbers = mediumFontNumbers;
+	if (signSelect.selectedIndex == 0) {
+		numbers = smallFontNumbers;
+	} else if (signSelect.selectedIndex == 4) {
+		numbers = largeFontNumbers;
+	}
 	const offset = signSelect.selectedIndex == 0 ? 8 : 10;
 
 	displaybuffer = getBlankScreen();
@@ -466,7 +476,7 @@ function drawNumber(number) {
 	}
 
 	for (const digit of digits) {
-		const width = offset;
+		var width = offset;
 
 		for (let x = 0; x < width; x++) {
 			if (currentX + x >= 0) {

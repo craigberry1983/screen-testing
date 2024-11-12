@@ -100,7 +100,7 @@ select {
   height: 250px;
   overflow: auto;
   grid-area: dat;
-  display: block;
+  display: none;
 }
 
 #disclaimer {
