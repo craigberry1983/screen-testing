@@ -121,7 +121,7 @@ const camera = {
 };
 
 let bloomFactor = 0;
-let selectedIndex = 1;
+let selectedIndex = 0;
 let selectedModel = signModels[selectedIndex];
 var displaybuffer = getBlankScreen();
 
@@ -489,8 +489,8 @@ window.addEventListener("load", function () {
 	drawNumber(slider.value);
 
 	// Initialize
-	updateSelectedObject(0);
-	update();
+	signSelect.selectedIndex = 2;
+	updateSelectedObject(2);
 });
 
 var displaybuffer = getBlankScreen();
