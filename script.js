@@ -129,7 +129,7 @@ const mediumGlyphs = [
 ];
 
 const signModels = [
-	{ name: '8"', width: 17.067, height: 8.4, ledDiameter: 0.157, margin: 0.2, pitchX: 0.667, pitchY: 0.667, ledsX: 26, ledsY: 13 },
+	/*{ name: '8"', width: 17.067, height: 8.4, ledDiameter: 0.157, margin: 0.2, pitchX: 0.667, pitchY: 0.667, ledsX: 26, ledsY: 13 },*/
 	{ name: '10"', width: 21.1, height: 10.4, ledDiameter: 0.157, margin: 0.2, pitchX: 0.667, pitchY: 0.667, ledsX: 32, ledsY: 16 },
 	{ name: '12"', width: 25.1, height: 12.4, ledDiameter: 0.188, margin: 0.2, pitchX: 0.8, pitchY: 0.8, ledsX: 32, ledsY: 16 },
 	{ name: '14"', width: 29.1, height: 14.4, ledDiameter: 0.13, margin: 0.2, pitchX: 0.9333, pitchY: 0.9333, ledsX: 32, ledsY: 16 },
@@ -365,10 +365,10 @@ function setBit(number, position) {
 
 function drawMessage(message) {
 	const map = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	const glyphs = signSelect.selectedIndex == 0 ? smallGlyphs : mediumGlyphs;
-	const glyphHeight = signSelect.selectedIndex == 0 ? 6 : 7;
-	const maxLetters = signSelect.selectedIndex == 0 ? 4 : 5;
-	const maxWords = signSelect.selectedIndex == 4 ? 3 : 2;
+	const glyphs = selectedModel.name === '8"' ? smallGlyphs : mediumGlyphs;
+	const glyphHeight = selectedModel.name === '8"' ? 6 : 7;
+	const maxLetters = selectedModel.name === '8"' ? 4 : 5;
+	const maxWords = selectedModel.name === '18"' ? 3 : 2;
 	const gap = 1;
 	//split message into words.
 	var words = message.toUpperCase().split(" ");
@@ -415,13 +415,8 @@ function drawMessage(message) {
 }
 
 function drawNumber(number) {
-	var numbers = mediumFontNumbers;
-	if (signSelect.selectedIndex == 0) {
-		numbers = smallFontNumbers;
-	} else if (signSelect.selectedIndex == 4) {
-		numbers = largeFontNumbers;
-	}
-	const offset = signSelect.selectedIndex == 0 ? 8 : 10;
+	const numbers = selectedModel.name == '8"' ? smallFontNumbers : selectedModel.name == '18"' ? largeFontNumbers : mediumFontNumbers;
+	const offset = selectedModel.name == '8"' ? 8 : 10;
 
 	displaybuffer = getBlankScreen();
 
@@ -470,8 +465,8 @@ window.addEventListener("load", function () {
 
 	//initialize
 	drawNumber(slider.value);
-	signSelect.selectedIndex = 2;
-	updateSelectedObject(2);
+	signSelect.selectedIndex = 1;
+	updateSelectedObject(1);
 });
 
 //convert image to data once it loads
