@@ -1,4 +1,5 @@
 //ui refs:
+
 const image = document.getElementById("source");
 const txtMessage = document.getElementById("txtMessage");
 const canvas = document.getElementById("mainCanvas");
@@ -10,7 +11,80 @@ const bloomSlider = document.getElementById("bloom");
 const signSelect = document.getElementById("signSelect");
 const measurementsDiv = document.getElementById("measurements");
 
-//data:
+const tabs = document.querySelectorAll("[data-tab-target]");
+const tabContents = document.querySelectorAll("[data-tab-content]");
+
+const drawingToolRadiusChoice = document.getElementById("drawing-tool-radius");
+const penRB = document.getElementById("pen");
+const eraserRB = document.getElementById("eraser");
+const clearScreenButton = document.getElementById("clear-drawing-button");
+const copyDrawingDataButton = document.getElementById("copy-drawing-button");
+
+const drawingResultsSection = document.getElementById("drawing-results");
+
+copyDrawingDataButton.addEventListener("click", () => {
+	copyDrawingDataToClipboard();
+});
+
+clearScreenButton.addEventListener("click", () => {
+	displaybuffer = getBlankScreen();
+	updateDrawingDataSection();
+});
+
+drawingResultsSection.addEventListener("paste", (event) => {
+	// Get the pasted data
+	const displayBufferBackup = [];
+	displaybuffer.forEach((element) => {
+		displayBufferBackup.push(element);
+	});
+	const str = event.clipboardData.getData("text/plain");
+
+	//attempt to convert pasted data to new displaybuffer.
+	try {
+		const openingBracketIndex = str.indexOf("[");
+		const closingBracketIndex = str.lastIndexOf("]");
+		if (openingBracketIndex !== -1 && closingBracketIndex !== -1) {
+			const columnData = str.substring(openingBracketIndex + 1, closingBracketIndex).split(",");
+			displaybuffer = [];
+			columnData.forEach((element) => {
+				const number = parseInt(element, 16);
+				displaybuffer.push(number);
+			});
+		}
+	} catch (ex) {
+		alert(`Unable to create new displayBuffer: ${ex}`);
+		displaybuffer = displayBufferBackup;
+	}
+});
+
+penRB.addEventListener("change", () => {
+	drawingTool.pen = true;
+});
+
+eraserRB.addEventListener("change", () => {
+	drawingTool.pen = false;
+});
+
+drawingToolRadiusChoice.addEventListener("change", () => {
+	drawingTool.radius = drawingToolRadiusChoice.value;
+});
+
+let drawingMode = true;
+let drawingTool = { x: 0, y: 0, radius: 20, pen: true, visible: false, down: false };
+
+tabs.forEach((tab) => {
+	tab.addEventListener("click", () => {
+		tabContents.forEach((tabContent) => tabContent.classList.remove("active"));
+		tabs.forEach((tab) => tab.classList.remove("active"));
+		tab.classList.add("active");
+		const target = document.querySelector(tab.dataset.tabTarget);
+		target.classList.add("active");
+
+		drawingMode = target.id === "drawing-mode";
+	});
+});
+
+//data (stored by column, LtoR, BtoT):
 const smallFontNumbers = [
 	[0x7fc, 0xffe, 0x1c07, 0x1803, 0x1803, 0x1c07, 0xffe, 0x7fc], // 0
 	[0x0, 0x0, 0xc00, 0x1fff, 0x1fff, 0x1fff, 0x0, 0x0], // 1
@@ -148,7 +222,6 @@ function updateSelectedObject(index) {
 	selectedModel = signModels[signSelect.selectedIndex];
 	updateMeasurementInputs();
 	fitScreenToCanvas(selectedModel.width, selectedModel.height, camera);
-	drawNumber(slider.value);
 }
 
 function updateMeasurementInputs() {
@@ -203,7 +276,7 @@ function fitScreenToCanvas(objectWidthInInches, objectHeightInInches, camera) {
 
 function draw(ctx, camera) {
 	const topLeft = { x: -selectedModel.width / 2, y: -selectedModel.height / 2 };
-	const topLeftPixels = worldToCanvas(topLeft.x, topLeft.y, camera);
+	const topLeftPixels = worldToCanvas(topLeft.x, topLeft.y);
 	const boardWidthPixels = selectedModel.width * camera.zoom;
 	const boardHeightPixels = selectedModel.height * camera.zoom;
 	const ledRadiusPixels = (selectedModel.ledDiameter / 2) * camera.zoom;
@@ -213,8 +286,22 @@ function draw(ctx, camera) {
 	ctx.fillRect(topLeftPixels.x, topLeftPixels.y, boardWidthPixels, boardHeightPixels);
 
 	const ledOnColor = "#FFB343";
-	const ledOffColor = "#101010";
+	const ledOffColor = drawingMode ? "#555" : "#101010";
 	const bloom = `#FFBF00${bloomFactor.toString().padStart(2, "0")}`;
+
+	//draw centerlines if we are in drawing mode
+	if (drawingMode) {
+		const boardCenterX = topLeftPixels.x + boardWidthPixels / 2;
+		const boardCenterY = topLeftPixels.y + boardHeightPixels / 2;
+		ctx.strokeStyle = "red";
+		ctx.beginPath();
+		ctx.setLineDash([5, 15]);
+		ctx.moveTo(boardCenterX, topLeftPixels.y);
+		ctx.lineTo(boardCenterX, topLeftPixels.y + boardHeightPixels);
+		ctx.moveTo(topLeftPixels.x, boardCenterY);
+		ctx.lineTo(topLeftPixels.x + boardWidthPixels, boardCenterY);
+		ctx.stroke();
+	}
 
 	for (let column = selectedModel.ledsX - 1; column >= 0; column--) {
 		const bits = getBits(displaybuffer[column]);
@@ -228,7 +315,7 @@ function draw(ctx, camera) {
 		//traverse the column from bottom to top
 		for (let row = selectedModel.ledsY - 1; row >= 0; row--) {
 			//draw each LED
-			const pos = worldToCanvas(xPosition, topLeft.y + selectedModel.margin + row * selectedModel.pitchY, camera);
+			const pos = worldToCanvas(xPosition, topLeft.y + selectedModel.margin + row * selectedModel.pitchY);
 			const ledOn = bits[selectedModel.ledsY - 1 - row] == 1;
 			ctx.fillStyle = ledOn ? ledOnColor : ledOffColor;
 			ctx.beginPath();
@@ -244,7 +331,7 @@ function draw(ctx, camera) {
 		//traverse the column from bottom to top
 		for (let row = selectedModel.ledsY - 1; row >= 0; row--) {
 			//draw each LED
-			const pos = worldToCanvas(topLeft.x + selectedModel.margin + column * selectedModel.pitchX, topLeft.y + selectedModel.margin + row * selectedModel.pitchY, camera);
+			const pos = worldToCanvas(topLeft.x + selectedModel.margin + column * selectedModel.pitchX, topLeft.y + selectedModel.margin + row * selectedModel.pitchY);
 			const ledOn = bits[selectedModel.ledsY - 1 - row] == 1;
 
 			if (ledOn) {
@@ -256,12 +343,25 @@ function draw(ctx, camera) {
 			}
 		}
 	}
+
+	//draw drawing tool UI if needed
+	drawDrawingTool();
 }
 
-function worldToCanvas(worldX, worldY, camera) {
+function worldToCanvas(worldX, worldY) {
 	const canvasX = (worldX - camera.x) * camera.zoom + canvas.width / 2;
 	const canvasY = (worldY - camera.y) * camera.zoom + canvas.height / 2;
 	return { x: canvasX, y: canvasY };
+}
+
+function canvasToWorld(canvasX, canvasY) {
+	const worldX = (canvasX - canvas.width / 2) / camera.zoom + camera.x;
+	const worldY = (canvasY - canvas.height / 2) / camera.zoom + camera.y;
+	return { x: worldX, y: worldY };
+}
+
+function canvasRadiusToWorldRadius(canvasRadius) {
+	return canvasRadius / camera.zoom;
 }
 
 // Populate the select element with options
@@ -363,6 +463,10 @@ function setBit(number, position) {
 	return number | (1 << position);
 }
 
+function unsetBit(number, position) {
+	return number & ~(1 << position);
+}
+
 function drawMessage(message) {
 	const map = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	const glyphs = selectedModel.name === '8"' ? smallGlyphs : mediumGlyphs;
@@ -399,7 +503,6 @@ function drawMessage(message) {
 					const displayColumnIndex = currentX + x;
 					for (let y = 0; y < glyphHeight; y++) {
 						if (isBitSet(columnData, y)) {
-							console.log("bit set");
 							displaybuffer[displayColumnIndex] = setBit(displaybuffer[currentX + x], currentY + y);
 						}
 					}
@@ -410,8 +513,6 @@ function drawMessage(message) {
 		}
 		currentY += glyphHeight + gap;
 	});
-
-	draw(ctx, camera);
 }
 
 function drawNumber(number) {
@@ -446,9 +547,114 @@ function drawNumber(number) {
 		}
 		currentX += width + gap;
 	}
-
-	draw(ctx, camera);
 }
+
+function drawDrawingTool() {
+	if (!drawingMode || !drawingTool.visible) return;
+
+	ctx.beginPath();
+	ctx.moveTo(drawingTool.x, drawingTool.y);
+	ctx.fillStyle = drawingTool.down ? "#FF000088" : "#00FFFF88";
+	ctx.ellipse(drawingTool.x, drawingTool.y, drawingTool.radius, drawingTool.radius, 0, 0, 2 * Math.PI);
+	ctx.fill();
+}
+
+function updateLedsInRadius(worldX, worldY, worldRadius) {
+	for (let column = 0; column < selectedModel.ledsX; column++) {
+		for (let row = 0; row < selectedModel.ledsY; row++) {
+			// Calculate the world position of the current LED
+			const ledWorldX = -selectedModel.width / 2 + selectedModel.margin + column * selectedModel.pitchX;
+			const ledWorldY = -selectedModel.height / 2 + selectedModel.margin + row * selectedModel.pitchY;
+
+			// Calculate the distance between the LED and the drawing tool center
+			const distance = Math.sqrt(Math.pow(worldX - ledWorldX, 2) + Math.pow(worldY - ledWorldY, 2));
+
+			// Check if the LED is within the radius
+			if (distance <= worldRadius) {
+				const bitMask = 1 << (selectedModel.ledsY - 1 - row);
+				if (drawingTool.pen) {
+					// Set the bit
+					displaybuffer[column] |= bitMask;
+				} else {
+					// Unset the bit
+					displaybuffer[column] &= ~bitMask;
+				}
+			}
+		}
+	}
+	updateDrawingDataSection();
+}
+
+function updateDrawingDataSection() {
+	let result = "[";
+	displaybuffer.forEach((columnData) => {
+		result += `0x${columnData.toString(16)}, `;
+	});
+	const lastComma = result.lastIndexOf(",");
+	result = result.slice(0, lastComma);
+	drawingResultsSection.value = result + "]";
+}
+
+function copyDrawingDataToClipboard() {
+	const textToCopy = drawingResultsSection.value;
+
+	navigator.clipboard
+		.writeText(textToCopy)
+		.then(() => {
+			alert("Data copied to clipboard");
+		})
+		.catch((err) => {
+			alert("Failed to copy: ", err);
+		});
+}
+
+function updateDrawingToolPosition(e) {
+	var rect = canvas.getBoundingClientRect();
+	drawingTool.x = e.clientX - rect.left;
+	drawingTool.y = e.clientY - rect.top;
+}
+
+function drawOnCanvas() {
+	if (!drawingMode || !drawingTool.down) return;
+	let worldPosition = canvasToWorld(drawingTool.x, drawingTool.y);
+	let worldRadius = canvasRadiusToWorldRadius(drawingTool.radius);
+	updateLedsInRadius(worldPosition.x, worldPosition.y, worldRadius);
+}
+
+//canvas drawing logic
+canvas.onmousedown = function (e) {
+	if (drawingMode) {
+		if (e.button === 0) {
+			drawingTool.down = true;
+		}
+
+		updateDrawingToolPosition(e);
+		drawOnCanvas();
+	}
+};
+canvas.onmousemove = function (e) {
+	if (drawingMode) {
+		// important: correct mouse position:
+		updateDrawingToolPosition(e);
+		drawOnCanvas();
+	}
+};
+
+canvas.onmouseenter = function (e) {
+	if (drawingMode) {
+		drawingTool.visible = true;
+	}
+};
+
+canvas.onmouseleave = function (e) {
+	drawingTool.visible = false;
+};
+
+window.addEventListener("mouseup", (event) => {
+	if (event.button === 0) {
+		drawingTool.down = false;
+	}
+});
 
 window.addEventListener("load", function () {
 	//set UI defaults and wire up event handlers
@@ -467,6 +673,17 @@ window.addEventListener("load", function () {
 	drawNumber(slider.value);
 	signSelect.selectedIndex = 1;
 	updateSelectedObject(1);
+	updateDrawingDataSection();
+
+	if (drawingTool.pen) {
+		penRB.checked = true;
+	} else {
+		eraserRB.checked = true;
+	}
+
+	this.setInterval(() => {
+		draw(ctx, camera);
+	}, 50);
 });
 
 //convert image to data once it loads

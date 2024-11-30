@@ -12,32 +12,56 @@
 	<body>
 		<div class="grid-container">
 			<canvas id="mainCanvas" width="500" height="250"></canvas>
-			<div id="controls">
-				<h3>Hardware</h3>
-				<label for="signSelect" class="subheading">size:</label>
-				<select id="signSelect"></select>
-				<div id="measurements"></div>
-				<br />
-				<h3>Display</h3>
-				<div>
-					<label for="bloom" class="subheading">Bloom Factor:</label>
-					<input type="range" id="bloom" min="0" max="8" step="1" value="4" />
+
+			<!-- tabs -->
+			<ul class="tabs">
+				<li data-tab-target="#preview-mode" class="tab">Preview Mode</li>
+				<li data-tab-target="#drawing-mode" class="active tab">Drawing Mode</li>
+			</ul>
+			<div class="tab-content">
+				<div id="preview-mode" data-tab-content>
+					<h3>Hardware</h3>
+					<label for="signSelect" class="subheading">size:</label>
+					<select id="signSelect"></select>
+					<div id="measurements"></div>
+					<br />
+					<h3>Display</h3>
+					<div>
+						<label for="bloom" class="subheading">Bloom Factor:</label>
+						<input type="range" id="bloom" min="0" max="8" step="1" value="4" />
+					</div>
+					<div>
+						<label for="speedSlider" class="subheading">Number:</label>
+						<input type="range" min="0" max="199" value="25" class="slider" id="speedSlider" />
+						<div id="sliderLabel" style="display: inline"></div>
+					</div>
+					<div>
+						<label for="txtMessage" class="subheading">Custom Message:</label>
+						<input id="txtMessage" type="text" />
+						<p id="disclaimer">Note: message gated behind non-MUTCD flag and limitations for word size and amount vary by sign size.</p>
+					</div>
+					<fieldset id="bitmap-data">
+						<legend>Bitmap Data:</legend>
+						<div id="results"></div>
+					</fieldset>
 				</div>
-				<div>
-					<label for="speedSlider" class="subheading">Number:</label>
-					<input type="range" min="0" max="199" value="25" class="slider" id="speedSlider" />
-					<div id="sliderLabel" style="display: inline"></div>
-				</div>
-				<div>
-					<label for="txtMessage" class="subheading">Custom Message:</label>
-					<input id="txtMessage" type="text" />
-					<p id="disclaimer">Note: message gated behind non-MUTCD flag and limitations for word size and amount vary by sign size.</p>
+
+				<div id="drawing-mode" data-tab-content class="active">
+					<button id="clear-drawing-button">Clear Screen</button>
+					<br />
+					<input type="range" name="drawing-tool-radius" id="drawing-tool-radius" min="5" max="50" value="20" />
+					<label for="pen">Pen</label>
+					<input type="radio" name="drawingTool" id="pen" />
+					<label for="eraser">Eraser</label>
+					<input type="radio" name="drawingTool" id="eraser" />
+					<br />
+					<fieldset id="drawing-data">
+						<legend>Data:</legend>
+						<textarea id="drawing-results"></textarea>
+					</fieldset>
+					<button id="copy-drawing-button">Copy Data</button>
 				</div>
 			</div>
-			<fieldset id="bitmap-data">
-				<legend>Bitmap Data:</legend>
-				<div id="results"></div>
-			</fieldset>
 		</div>
 
 		<script src="script.js"></script>
