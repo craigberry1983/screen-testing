@@ -15,11 +15,11 @@
 
 			<!-- tabs -->
 			<ul class="tabs">
-				<li data-tab-target="#preview-mode" class="tab">Preview Mode</li>
-				<li data-tab-target="#drawing-mode" class="active tab">Drawing Mode</li>
+				<li data-tab-target="#preview-mode" class="active tab">Preview Mode</li>
+				<li data-tab-target="#drawing-mode" class="tab">Drawing Mode</li>
 			</ul>
 			<div class="tab-content">
-				<div id="preview-mode" data-tab-content>
+				<div id="preview-mode" data-tab-content class="active">
 					<h3>Hardware</h3>
 					<label for="signSelect" class="subheading">size:</label>
 					<select id="signSelect"></select>
@@ -46,7 +46,7 @@
 					</fieldset>
 				</div>
 
-				<div id="drawing-mode" data-tab-content class="active">
+				<div id="drawing-mode" data-tab-content>
 					<button id="clear-drawing-button">Clear Screen</button>
 					<br />
 					<input type="range" name="drawing-tool-radius" id="drawing-tool-radius" min="5" max="50" value="20" />

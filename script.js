@@ -69,7 +69,7 @@ drawingToolRadiusChoice.addEventListener("change", () => {
 	drawingTool.radius = drawingToolRadiusChoice.value;
 });
 
-let drawingMode = true;
+let drawingMode = false;
 let drawingTool = { x: 0, y: 0, radius: 20, pen: true, visible: false, down: false };
 
 tabs.forEach((tab) => {
