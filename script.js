@@ -51,15 +51,12 @@ drawingResultsSection.addEventListener("paste", (event) => {
 		const closingBracketIndex = str.lastIndexOf("]");
 		if (openingBracketIndex !== -1 && closingBracketIndex !== -1) {
 			const columnData = str.substring(openingBracketIndex + 1, closingBracketIndex).split(",");
-			if (selectedModel.name === '18"') {
-				inverseTransposeForLargeDisplays(columnData, 32, 24);
-			} else {
-				displayBuffer = Array(columnData.length).fill(0);
-				columnData.forEach((element, index) => {
-					const number = parseInt(element, 16);
-					displayBuffer[index] = number;
-				});
-			}
+
+			displayBuffer = Array(columnData.length).fill(0);
+			columnData.forEach((element, index) => {
+				const number = parseInt(element, 16);
+				displayBuffer[index] = number;
+			});
 		}
 	} catch (ex) {
 		alert(`Unable to create new displayBuffer: ${ex}`);
@@ -603,87 +600,14 @@ function updateLedsInRadius(worldX, worldY, worldRadius) {
 }
 
 function updateDrawingDataSection() {
-	if (selectedModel.name == '18"') {
-		//18s are different
-		let result = "[";
-		let buffer18 = transposeForLargeDisplays(32, 24);
-		buffer18.forEach((columnData) => {
-			const unsignedNumber = columnData >>> 0; // Force unsigned
-			result += `0x${unsignedNumber.toString(16)}, `;
-		});
-		const lastComma = result.lastIndexOf(",");
-		result = result.slice(0, lastComma);
-		drawingResultsSection.value = result + "]";
-	} else {
-		//non 18 models all use the same LED filling pattern
-		let result = "[";
-		displayBuffer.forEach((columnData) => {
-			const unsignedNumber = columnData >>> 0; // Force unsigned
-			result += `0x${unsignedNumber.toString(16)}, `;
-		});
-		const lastComma = result.lastIndexOf(",");
-		result = result.slice(0, lastComma);
-		drawingResultsSection.value = result + "]";
-	}
-}
-
-function transposeForLargeDisplays(width, height) {
-	//Takes the original single-board column array of lit LEDs and transposes it for larger screens which use two rotated smaller display boards
-
-	// Initialize the new columns for the two boards
-	const newColumns = Array(width * 2).fill(0);
-
-	// Transpose the original canvas into a new layout
-	for (let x = 0; x < width; x++) {
-		for (let y = 0; y < height; y++) {
-			// Read the bit at (x, y)
-			const isLit = (displayBuffer[x] >> y) & 1;
-
-			// Determine the target column after rotation
-			const targetColumn = y;
-
-			// Determine the target board (right board gets first boards rows)
-			const targetIndex = x < 16 ? targetColumn + 24 : targetColumn;
-
-			// Set the bit in the new column
-			if (isLit) {
-				newColumns[targetIndex] |= 1 << (15 - (x % 16)); // Flip bit order within the column
-			}
-		}
-	}
-
-	return newColumns;
-}
-
-function inverseTransposeForLargeDisplays(data, width, height) {
-	// Initialize the original single-board column array
-	displayBuffer = Array(width).fill(0);
-
-	// Reverse transpose the larger display back to the original single-board layout
-	for (let x = 0; x < width * 2; x++) {
-		for (let y = 0; y < height; y++) {
-			// Read the bit at (x, y) in the rotated column
-			const isLit = (data[x] >> (15 - y)) & 1; // Reverse the flipped bit order
-
-			if (isLit) {
-				// Determine the target column and board
-				let targetColumn, targetIndex;
-
-				if (x < 24) {
-					// Left-hand rotated display (top half of original)
-					targetColumn = x;
-					targetIndex = y + 16;
-				} else {
-					// Right-hand rotated display (bottom half of original)
-					targetColumn = x - 24;
-					targetIndex = y;
-				}
-
-				// Set the bit in the original buffer
-				displayBuffer[targetIndex] |= 1 << targetColumn;
-			}
-		}
-	}
+	let result = "[";
+	displayBuffer.forEach((columnData) => {
+		const unsignedNumber = columnData >>> 0; // Force unsigned
+		result += `0x${unsignedNumber.toString(16)}, `;
+	});
+	const lastComma = result.lastIndexOf(",");
+	result = result.slice(0, lastComma);
+	drawingResultsSection.value = result + "]";
 }
 
 function invertDisplayBuffer() {
