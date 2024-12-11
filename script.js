@@ -18,6 +18,7 @@ const drawingToolRadiusChoice = document.getElementById("drawing-tool-radius");
 const penRB = document.getElementById("pen");
 const eraserRB = document.getElementById("eraser");
 const clearScreenButton = document.getElementById("clear-drawing-button");
+const invertScreenButton = document.getElementById("invert-drawing-button");
 const copyDrawingDataButton = document.getElementById("copy-drawing-button");
 
 const drawingResultsSection = document.getElementById("drawing-results");
@@ -27,14 +28,19 @@ copyDrawingDataButton.addEventListener("click", () => {
 });
 
 clearScreenButton.addEventListener("click", () => {
-	displaybuffer = getBlankScreen();
+	displayBuffer = getBlankScreen();
+	updateDrawingDataSection();
+});
+
+invertScreenButton.addEventListener("click", () => {
+	displayBuffer = invertDisplayBuffer();
 	updateDrawingDataSection();
 });
 
 drawingResultsSection.addEventListener("paste", (event) => {
 	// Get the pasted data
 	const displayBufferBackup = [];
-	displaybuffer.forEach((element) => {
+	displayBuffer.forEach((element) => {
 		displayBufferBackup.push(element);
 	});
 	const str = event.clipboardData.getData("text/plain");
@@ -45,15 +51,19 @@ drawingResultsSection.addEventListener("paste", (event) => {
 		const closingBracketIndex = str.lastIndexOf("]");
 		if (openingBracketIndex !== -1 && closingBracketIndex !== -1) {
 			const columnData = str.substring(openingBracketIndex + 1, closingBracketIndex).split(",");
-			displaybuffer = [];
-			columnData.forEach((element) => {
-				const number = parseInt(element, 16);
-				displaybuffer.push(number);
-			});
+			if (selectedModel.name === '18"') {
+				inverseTransposeForLargeDisplays(columnData, 32, 24);
+			} else {
+				const displayBuffer = Array(columnData.length).fill(0);
+				columnData.forEach((element, index) => {
+					const number = parseInt(element, 16);
+					displayBuffer[index].push(number);
+				});
+			}
 		}
 	} catch (ex) {
 		alert(`Unable to create new displayBuffer: ${ex}`);
-		displaybuffer = displayBufferBackup;
+		displayBuffer = displayBufferBackup;
 	}
 });
 
@@ -283,7 +293,7 @@ function draw(ctx, camera) {
 	const ledRadiusPixels = (selectedModel.ledDiameter / 2) * camera.zoom;
 
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	ctx.fillStyle = "#181818";
+	ctx.fillStyle = "black";
 	ctx.fillRect(topLeftPixels.x, topLeftPixels.y, boardWidthPixels, boardHeightPixels);
 
 	const ledOnColor = "#FFB343";
@@ -305,7 +315,7 @@ function draw(ctx, camera) {
 	}
 
 	for (let column = selectedModel.ledsX - 1; column >= 0; column--) {
-		const bits = getBits(displaybuffer[column]);
+		const bits = getBits(displayBuffer[column]);
 		var xPosition = topLeft.x + selectedModel.margin + column * selectedModel.pitchX;
 
 		//provide for the two boards placed together in 18" sign
@@ -328,7 +338,7 @@ function draw(ctx, camera) {
 
 	//second pass: add bloom effect
 	for (let column = selectedModel.ledsX - 1; column >= 0; column--) {
-		const bits = getBits(displaybuffer[column]);
+		const bits = getBits(displayBuffer[column]);
 		//traverse the column from bottom to top
 		for (let row = selectedModel.ledsY - 1; row >= 0; row--) {
 			//draw each LED
@@ -374,7 +384,7 @@ signModels.forEach((model, index) => {
 });
 
 function getBlankScreen() {
-	return [0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000];
+	return Array(selectedModel.ledsX).fill(0);
 }
 
 function convertImageToData(imgElement, digitsOnly = true) {
@@ -478,7 +488,7 @@ function drawMessage(message) {
 	//split message into words.
 	var words = message.toUpperCase().split(" ");
 
-	displaybuffer = getBlankScreen();
+	displayBuffer = getBlankScreen();
 
 	//truncate words to max allowed
 	if (words.length >= maxWords) {
@@ -504,7 +514,7 @@ function drawMessage(message) {
 					const displayColumnIndex = currentX + x;
 					for (let y = 0; y < glyphHeight; y++) {
 						if (isBitSet(columnData, y)) {
-							displaybuffer[displayColumnIndex] = setBit(displaybuffer[currentX + x], currentY + y);
+							displayBuffer[displayColumnIndex] = setBit(displayBuffer[currentX + x], currentY + y);
 						}
 					}
 				}
@@ -520,7 +530,7 @@ function drawNumber(number) {
 	const numbers = selectedModel.name == '8"' ? smallFontNumbers : selectedModel.name == '18"' ? largeFontNumbers : mediumFontNumbers;
 	const offset = selectedModel.name == '8"' ? 8 : 10;
 
-	displaybuffer = getBlankScreen();
+	displayBuffer = getBlankScreen();
 
 	//get each digit from the number
 	const num = Math.max(0, Math.min(number, 999));
@@ -543,7 +553,7 @@ function drawNumber(number) {
 
 		for (let x = 0; x < width; x++) {
 			if (currentX + x >= 0) {
-				displaybuffer[currentX + x] = numbers[digit][x];
+				displayBuffer[currentX + x] = numbers[digit][x];
 			}
 		}
 		currentX += width + gap;
@@ -575,10 +585,10 @@ function updateLedsInRadius(worldX, worldY, worldRadius) {
 				const bitMask = 1 << (selectedModel.ledsY - 1 - row);
 				if (drawingTool.pen) {
 					// Set the bit
-					displaybuffer[column] |= bitMask;
+					displayBuffer[column] |= bitMask;
 				} else {
 					// Unset the bit
-					displaybuffer[column] &= ~bitMask;
+					displayBuffer[column] &= ~bitMask;
 				}
 			}
 		}
@@ -590,7 +600,7 @@ function updateDrawingDataSection() {
 	if (selectedModel.name == '18"') {
 		//18s are different
 		let result = "[";
-		let buffer18 = transposeForRotatedDisplays(32, 24);
+		let buffer18 = transposeForLargeDisplays(32, 24);
 		buffer18.forEach((columnData) => {
 			result += `0x${columnData.toString(16)}, `;
 		});
@@ -600,7 +610,7 @@ function updateDrawingDataSection() {
 	} else {
 		//non 18 models all use the same LED filling pattern
 		let result = "[";
-		displaybuffer.forEach((columnData) => {
+		displayBuffer.forEach((columnData) => {
 			result += `0x${columnData.toString(16)}, `;
 		});
 		const lastComma = result.lastIndexOf(",");
@@ -609,7 +619,9 @@ function updateDrawingDataSection() {
 	}
 }
 
-function transposeForRotatedDisplays(width, height) {
+function transposeForLargeDisplays(width, height) {
+	//Takes the original single-board column array of lit LEDs and transposes it for larger screens which use two rotated smaller display boards
+
 	// Initialize the new columns for the two boards
 	const newColumns = Array(width * 2).fill(0);
 
@@ -617,7 +629,7 @@ function transposeForRotatedDisplays(width, height) {
 	for (let x = 0; x < width; x++) {
 		for (let y = 0; y < height; y++) {
 			// Read the bit at (x, y)
-			const isLit = (displaybuffer[x] >> y) & 1;
+			const isLit = (displayBuffer[x] >> y) & 1;
 
 			// Determine the target column after rotation
 			const targetColumn = y;
@@ -635,8 +647,54 @@ function transposeForRotatedDisplays(width, height) {
 	return newColumns;
 }
 
+function inverseTransposeForLargeDisplays(data, width, height) {
+	// Initialize the original single-board column array
+	displayBuffer = Array(width).fill(0);
+
+	// Reverse transpose the larger display back to the original single-board layout
+	for (let x = 0; x < width * 2; x++) {
+		for (let y = 0; y < height; y++) {
+			// Read the bit at (x, y) in the rotated column
+			const isLit = (data[x] >> (15 - y)) & 1; // Reverse the flipped bit order
+
+			if (isLit) {
+				// Determine the target column and board
+				let targetColumn, targetIndex;
+
+				if (x < 24) {
+					// Left-hand rotated display (top half of original)
+					targetColumn = x;
+					targetIndex = y + 16;
+				} else {
+					// Right-hand rotated display (bottom half of original)
+					targetColumn = x - 24;
+					targetIndex = y;
+				}
+
+				// Set the bit in the original buffer
+				displayBuffer[targetIndex] |= 1 << targetColumn;
+			}
+		}
+	}
+}
+
+function invertDisplayBuffer() {
+	console.log("Display Buffer Length:", displayBuffer.length);
+	// Create a new buffer for the inverted result
+	return displayBuffer.map((column, index) => {
+		console.log("INDEX", index);
+		// Invert all bits and force the result to be unsigned
+		const inverted = ~column >>> 0;
+
+		// Debugging: Log the column and its inversion
+		console.log(`Column ${index}: Original: ${column.toString(2).padStart(32, "0")} Inverted: ${inverted.toString(2).padStart(32, "0")}`);
+
+		return inverted;
+	});
+}
+
 function isLEDLit(x, y) {
-	if (x < 0 || x >= displaybuffer.length || y < 0 || y > 15) {
+	if (x < 0 || x >= displayBuffer.length || y < 0 || y > 15) {
 		throw new Error("Invalid position");
 	}
 
@@ -722,8 +780,14 @@ window.addEventListener("load", function () {
 	});
 
 	//initialize
-	drawNumber(slider.value);
 	signSelect.selectedIndex = 1;
+	selectedModel = signModels[signSelect.selectedIndex];
+	bloomFactor = bloomSlider.value;
+
+	displayBuffer = getBlankScreen();
+
+	drawNumber(slider.value);
+
 	updateSelectedObject(1);
 	updateDrawingDataSection();
 
@@ -743,7 +807,6 @@ image.addEventListener("load", (e) => {
 	convertImageToData(image, false);
 });
 
-var displaybuffer = getBlankScreen();
 //vars:
 const camera = {
 	x: 0,
@@ -751,6 +814,6 @@ const camera = {
 	zoom: 0,
 };
 
-let bloomFactor = bloomSlider.value;
-let selectedModel = signModels[signSelect.selectedIndex];
-var displaybuffer = getBlankScreen();
+let bloomFactor;
+let selectedModel;
+let displayBuffer;
