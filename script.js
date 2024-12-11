@@ -215,6 +215,7 @@ bloomSlider.addEventListener("input", (e) => {
 	bloomFactor = parseInt(e.target.value);
 	updateSelectedObject(signSelect.selectedIndex);
 });
+
 signSelect.addEventListener("change", () => updateSelectedObject(signSelect.selectedIndex));
 
 function updateSelectedObject(index) {
@@ -586,13 +587,64 @@ function updateLedsInRadius(worldX, worldY, worldRadius) {
 }
 
 function updateDrawingDataSection() {
-	let result = "[";
-	displaybuffer.forEach((columnData) => {
-		result += `0x${columnData.toString(16)}, `;
-	});
-	const lastComma = result.lastIndexOf(",");
-	result = result.slice(0, lastComma);
-	drawingResultsSection.value = result + "]";
+	if (selectedModel.name == '18"') {
+		//18s are different
+		let result = "[";
+		let buffer18 = transposeForRotatedDisplays(32, 24);
+		buffer18.forEach((columnData) => {
+			result += `0x${columnData.toString(16)}, `;
+		});
+		const lastComma = result.lastIndexOf(",");
+		result = result.slice(0, lastComma);
+		drawingResultsSection.value = result + "]";
+	} else {
+		//non 18 models all use the same LED filling pattern
+		let result = "[";
+		displaybuffer.forEach((columnData) => {
+			result += `0x${columnData.toString(16)}, `;
+		});
+		const lastComma = result.lastIndexOf(",");
+		result = result.slice(0, lastComma);
+		drawingResultsSection.value = result + "]";
+	}
+}
+
+function transposeForRotatedDisplays(width, height) {
+	// Initialize the new columns for the two boards
+	const newColumns = Array(width * 2).fill(0);
+
+	// Transpose the original canvas into a new layout
+	for (let x = 0; x < width; x++) {
+		for (let y = 0; y < height; y++) {
+			// Read the bit at (x, y)
+			const isLit = (displaybuffer[x] >> y) & 1;
+
+			// Determine the target column after rotation
+			const targetColumn = y;
+
+			// Determine the target board (right board gets first boards rows)
+			const targetIndex = x < 16 ? targetColumn + 24 : targetColumn;
+
+			// Set the bit in the new column
+			if (isLit) {
+				newColumns[targetIndex] |= 1 << (15 - (x % 16)); // Flip bit order within the column
+			}
+		}
+	}
+
+	return newColumns;
+}
+
+function isLEDLit(x, y) {
+	if (x < 0 || x >= displaybuffer.length || y < 0 || y > 15) {
+		throw new Error("Invalid position");
+	}
+
+	// get the 16-bit number at column x
+	const column = array[x];
+
+	// check if the bit at position y is set
+	return (column >> y) & (1 === 1);
 }
 
 function copyDrawingDataToClipboard() {
