@@ -54,10 +54,10 @@ drawingResultsSection.addEventListener("paste", (event) => {
 			if (selectedModel.name === '18"') {
 				inverseTransposeForLargeDisplays(columnData, 32, 24);
 			} else {
-				const displayBuffer = Array(columnData.length).fill(0);
+				displayBuffer = Array(columnData.length).fill(0);
 				columnData.forEach((element, index) => {
 					const number = parseInt(element, 16);
-					displayBuffer[index].push(number);
+					displayBuffer[index] = number;
 				});
 			}
 		}
@@ -297,7 +297,7 @@ function draw(ctx, camera) {
 	ctx.fillRect(topLeftPixels.x, topLeftPixels.y, boardWidthPixels, boardHeightPixels);
 
 	const ledOnColor = "#FFB343";
-	const ledOffColor = drawingMode ? "#555" : "#101010";
+	const ledOffColor = "#1B1B1B";
 	const bloom = `#FFBF00${bloomFactor.toString().padStart(2, "0")}`;
 
 	//draw centerlines if we are in drawing mode
@@ -460,6 +460,9 @@ function convertImageToData(imgElement, digitsOnly = true) {
 
 function getBits(columnData) {
 	const bits = [];
+	// Force columnData to be unsigned
+	columnData >>>= 0;
+
 	for (let i = 0; i < 24; i++) {
 		bits.push((columnData & (1 << i)) === 0 ? 0 : 1);
 	}
@@ -467,15 +470,18 @@ function getBits(columnData) {
 }
 
 function isBitSet(number, position) {
-	return (number & (1 << position)) !== 0;
+	// Force number to be unsigned
+	return ((number >>> 0) & (1 << position)) !== 0;
 }
 
 function setBit(number, position) {
-	return number | (1 << position);
+	// Force number to be unsigned
+	return (number >>> 0) | (1 << position);
 }
 
 function unsetBit(number, position) {
-	return number & ~(1 << position);
+	// Force number to be unsigned
+	return (number >>> 0) & ~(1 << position);
 }
 
 function drawMessage(message) {
@@ -602,7 +608,8 @@ function updateDrawingDataSection() {
 		let result = "[";
 		let buffer18 = transposeForLargeDisplays(32, 24);
 		buffer18.forEach((columnData) => {
-			result += `0x${columnData.toString(16)}, `;
+			const unsignedNumber = columnData >>> 0; // Force unsigned
+			result += `0x${unsignedNumber.toString(16)}, `;
 		});
 		const lastComma = result.lastIndexOf(",");
 		result = result.slice(0, lastComma);
@@ -611,7 +618,8 @@ function updateDrawingDataSection() {
 		//non 18 models all use the same LED filling pattern
 		let result = "[";
 		displayBuffer.forEach((columnData) => {
-			result += `0x${columnData.toString(16)}, `;
+			const unsignedNumber = columnData >>> 0; // Force unsigned
+			result += `0x${unsignedNumber.toString(16)}, `;
 		});
 		const lastComma = result.lastIndexOf(",");
 		result = result.slice(0, lastComma);
